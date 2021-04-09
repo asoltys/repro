@@ -53,9 +53,6 @@ const faucet = async (addr) => {
   return tx;
 };
 
-const parseVal = (v) => parseInt(v.slice(1).toString("hex"), 16);
-const parseAsset = (v) => reverse(v.slice(1)).toString("hex");
-
 const unblind = (output) =>
   confidential.unblindOutputWithKey(output, blindingKey().privateKey);
 
@@ -131,8 +128,6 @@ const fund = async (
   asset,
   amount,
   sighashType = 1,
-  multisig = false,
-  includeConfidential = true
 ) => {
   let { address, redeem, output } = out;
 
@@ -164,23 +159,15 @@ const fund = async (
     }
   }
 
-  let all = utxos.filter(
+  utxos = shuffle(utxos.filter(
     (o) => o.asset === asset && (o.asset !== BTC || o.value > DUST)
-  );
-
-  utxos = shuffle(
-    all
-      .filter((o) => includeConfidential || !o.assetBuffer)
-      .filter((o) => o.assetBuffer || includeConfidential !== "only")
-  );
+  ));
 
   let i = 0;
   let total = 0;
 
   while (total < amount) {
     if (i >= utxos.length) {
-      if (!includeConfidential && all.length > utxos.length)
-        throw { message: "No confidential" };
       throw { message: "Insufficient funds", amount, asset, total };
     }
     total += utxos[i].value;
@@ -207,10 +194,6 @@ const fund = async (
       input.nonWitnessUtxo = Buffer.from(hex, "hex");
     }
 
-    if (multisig) {
-      input.witnessScript = redeem.redeem.output;
-    }
-
     p.addInput(input);
   }
 
@@ -221,7 +204,7 @@ const fund = async (
       p.addOutput({
         asset,
         nonce: Buffer.alloc(1),
-        script: multisig ? p2wpkh().output : out.output,
+        script: out.output,
         value: total - amount,
       });
 
