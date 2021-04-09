@@ -1,3 +1,4 @@
+const fs = require("fs");
 const { mnemonicToSeedSync } = require("bip39");
 const { fromSeed } = require("bip32");
 const { fromBase58 } = require("bip32");
@@ -326,7 +327,8 @@ const sign = (p, sighash = 1) => {
 const broadcast = async (p) => {
   let tx = p.extractTransaction();
   let hex = tx.toHex();
-  console.log("Broadcasting tx hex", hex);
+  console.log("Writing tx hex to ./hex");
+  fs.writeFileSync("hex", hex);
 
   return electrs.url("/tx").body(hex).post().text();
 };
