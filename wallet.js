@@ -122,6 +122,7 @@ function shuffle(array) {
   return array;
 }
 
+let outputsToBlind = [];
 const fund = async (
   p,
   out,
@@ -208,7 +209,7 @@ const fund = async (
         value: total - amount,
       });
 
-      if (Object.keys(blinded).length > 0) p = await blind(p, [changeIndex]);
+      if (Object.keys(blinded).length > 0) outputsToBlind.push(changeIndex)
     } else bumpFee(total - amount);
 };
 
@@ -365,7 +366,8 @@ const createIssuance = async (
   // p = await blind(p, [p.data.outputs.length - 1]);
 
   addFee(p);
-
+  console.log("Blinding outputs", outputsToBlind);
+  p = await blind(p, outputsToBlind);
   p = await sign(p);
   await broadcast(p);
 
